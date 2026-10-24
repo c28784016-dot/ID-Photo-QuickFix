@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Photo QuickFix</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1E3A8A">
+    <style>
+        :root {
+            --primary: #1E3A8A;
+            --accent: #10B981;
+            --bg-color: #F8FAFC;
+            --text-color: #1F2937;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .container {
+            flex: 1;
+            padding: 16px;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            padding-bottom: 70px; /* Para hindi matakpan ng banner ad sa ibaba */
+        }
+        .card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .size-buttons, .color-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .btn-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #E5E7EB;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .btn-option.active {
+            border-color: var(--primary);
+            background-color: #EFF6FF;
+            color: var(--primary);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            display: block;
+            background-color: #E2E8F0;
+            color: #475569;
+            text-align: center;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        .preview-container {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #CBD5E1;
+            background: #fff;
+        }
+        .btn-primary {
+            display: block;
+            width: 100%;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        /* HilltopAds Sticky Banner Container sa Ibaba */
+        .ad-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border-top: 1px solid #E5E7EB;
+            text-align: center;
+            padding: 5px 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <header>📸 ID Photo QuickFix</header>
+
+    <div class="container">
+        <div class="card">
+            <label>1. Piliin ang Sukat ng ID:</label>
+            <div class="size-buttons">
+                <button class="btn-option active" onclick="setSize('2x2')">2 x 2 in</button>
+                <button class="btn-option" onclick="setSize('1x1')">1 x 1 in</button>
+                <button class="btn-option" onclick="setSize('passport')">Passport</button>
+            </div>
+
+            <label>2. Kulay ng Background:</label>
+            <div class="color-buttons">
+                <button class="btn-option active" onclick="setBgColor('#FFFFFF')">White</button>
+                <button class="btn-option" onclick="setBgColor('#0047AB')">Blue</button>
+                <button class="btn-option" onclick="setBgColor('#DC2626')">Red</button>
+            </div>
+
+            <label>3. Mag-upload o Kumuha ng Larawan:</label>
+            <label for="imageUpload" class="upload-btn">📂 Piliin mula sa Gallery / Camera</label>
+            <input type="file" id="imageUpload" accept="image/*">
+
+            <div class="preview-container">
+                <canvas id="photoCanvas" width="300" height="300"></canvas>
+            </div>
+
+            <button class="btn-primary" id="downloadBtn" style="display:none;" onclick="downloadImage()">I-download ang ID Photo</button>
+        </div>
+    </div>
+
+    <!-- HilltopAds Banner Ad Placement -->
+    <div class="ad-banner" id="hilltop-ad-container">
+        <!-- ILAGAY DITO ANG HILLTOPADS BANNER JS SCRIPT KAPAG NAKAKUHA KA NA -->
+        <small style="color: #94A3B8;">[ HilltopAds Banner Space ]</small>
+    </div>
+
+    <script>
+        let currentSize = '2x2';
+        let bgColor = '#FFFFFF';
+        let uploadedImage = null;
+        const canvas = document.getElementById('photoCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function setSize(size) {
+            currentSize = size;
+            document.querySelectorAll('.size-buttons .btn-option').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if(size === '2x2') { canvas.width = 600; canvas.height = 600; }
+            else if(size === '1x1') { canvas.width = 400; canvas.height = 400; }
+            else if(size === 'passport') { canvas.width = 413; canvas.height = 531; }
+            
+            if(uploadedImage) drawImageToCanvas();
+        }
+
+        function setBgColor(color) {
+            bgColor = color;
+            document.querySelectorAll('.color-buttons .btn-option').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            if(uploadedImage) drawImageToCanvas();
+        }
+
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage = new Image();
+                    uploadedImage.onload = function() {
+                        drawImageToCanvas();
+                        document.getElementById('downloadBtn').style.display = 'block';
+                    }
+                    uploadedImage.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function drawImageToCanvas() {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let hRatio = canvas.width / uploadedImage.width;
+            let vRatio = canvas.height / uploadedImage.height;
+            let ratio = Math.max(hRatio, vRatio);
+            
+            let centerShiftX = (canvas.width - uploadedImage.width * ratio) / 2;
+            let centerShiftY = (canvas.height - uploadedImage.height * ratio) / 2;
+
+            ctx.drawImage(uploadedImage, 0, 0, uploadedImage.width, uploadedImage.height,
+                          centerShiftX, centerShiftY, uploadedImage.width * ratio, uploadedImage.height * ratio);
+        }
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = `ID-Photo-${currentSize}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Service Worker Registration para sa PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
